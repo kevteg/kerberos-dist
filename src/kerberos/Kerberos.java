@@ -17,10 +17,10 @@ public class Kerberos {
     ServerSocket server;
     Socket connect[];
     ArrayList<Character> alf,hashalf;
-    private static final String FILENAME = "users.txt";
-    
     private ArrayList<String> user=null;
     private ArrayList<String> pass=null;
+    private ArrayList<String> services_ids=null;
+    private ArrayList<String> services_psws=null;
     private final String passTGSpub = "14m7G5";
     private final String passTGSpri = "5G7m41";
     private final String passSSpub = "14m55";
@@ -30,47 +30,12 @@ public class Kerberos {
         int i=0;
         System.out.println("Servidor kerberisado");
         generate_hash();
-        BufferedReader br = null;
-        FileReader fr = null;
-        int line = 0;
-        String users[] = null;
-        String psw[] = null;
-        try {
-                //br = new BufferedReader(new FileReader(FILENAME));
-                fr = new FileReader(FILENAME);
-                br = new BufferedReader(fr);
-                String sCurrentLine;
-                System.out.println(br);
-                while ((sCurrentLine = br.readLine()) != null) {
-                        line++;
-                        if(line == 1)
-                            users = sCurrentLine.split(" ");
-                        else
-                            psw = sCurrentLine.split(" ");
-                        System.out.println(sCurrentLine);
-                }
-                user=new ArrayList<>(Arrays.asList(users));
-                pass=new ArrayList<>(Arrays.asList(psw));
-
-        } catch (IOException e) {
-                e.printStackTrace();
-        } finally {
-
-                try {
-
-                        if (br != null)
-                                br.close();
-
-                        if (fr != null)
-                                fr.close();
-
-                } catch (IOException ex) {
-
-                        ex.printStackTrace();
-
-                }
-
-        }
+        String[][] user_data = getInfoAtTXT("users.txt");
+        user = new ArrayList<>(Arrays.asList(user_data[0]));
+        pass = new ArrayList<>(Arrays.asList(user_data[1]));
+        String[][] services_data = getInfoAtTXT("services.txt");
+        services_ids = new ArrayList<>(Arrays.asList(user_data[0]));
+        services_psws = new ArrayList<>(Arrays.asList(user_data[1]));        
 
         try {    
             connect = new Socket[NM];
@@ -88,7 +53,44 @@ public class Kerberos {
             Logger.getLogger(Kerberos.class.getName()).log(Level.SEVERE, null, ex);
         }
     }       
+    
+    private String[][] getInfoAtTXT(String FILENAME){
+        BufferedReader br = null;
+        FileReader fr = null;
+        int line = 0;
+        String users[] = null;
+        String psw[] = null;
+        try {
+                fr = new FileReader(FILENAME);
+                br = new BufferedReader(fr);
+                String sCurrentLine;
+                System.out.println(br);
+                while ((sCurrentLine = br.readLine()) != null) {
+                        line++;
+                        if(line == 1)
+                            users = sCurrentLine.split(" ");
+                        else
+                            psw = sCurrentLine.split(" ");
+                        //System.out.println(sCurrentLine);
+                }
 
+        } catch (IOException e) {
+                e.printStackTrace();
+        } finally {
+                try {
+                        if (br != null)
+                                br.close();
+
+                        if (fr != null)
+                                fr.close();
+                } catch (IOException ex) {
+                        ex.printStackTrace();
+                }
+        }
+        String[][] data = {users, psw};
+        return data;
+    }
+    
     class thread extends Thread{
         Socket _socket; 
         DataInputStream in;
@@ -108,6 +110,9 @@ public class Kerberos {
             try {
                 String message= in.readUTF();
                 System.out.println(message);
+                //Separar con un espacio el nombre del usuario y el ID
+                //Revisar que el ID del servicio exista
+                //Igual que como se verifica el nombre del usuario
                 usernumber=verify_user(message);
                 if(usernumber!=-1){
                     message=encrypt(codePass(passTGSpub),pass.get(usernumber));

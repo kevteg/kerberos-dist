@@ -29,7 +29,7 @@ public class Cliente {
     ArrayList<Character> hashalf = new ArrayList<>();
     ArrayList<Character> alf = new ArrayList<>();
     String nombre;
-    String pass, letra, clientTGS, primero, segundo, ticket, ticket1, ticket2, idcliente, idcliente2, TGSdecif, TGSdecifCod, clave_ser, client_serverSK, client_serverSK2, client_serverSK3, idCServer, idCServer2, CS_H, CS_H2, CS_H3;
+    String pass, service, letra, clientTGS, primero, segundo, ticket, ticket1, ticket2, idcliente, idcliente2, TGSdecif, TGSdecifCod, clave_ser, client_serverSK, client_serverSK2, client_serverSK3, idCServer, idCServer2, CS_H, CS_H2, CS_H3;
     
     
     public Cliente(){
@@ -45,8 +45,11 @@ public class Cliente {
             System.out.println("Ingrese nombre de usuario: ");
             nombre= leer.readLine();
             out.writeUTF(nombre);
-            System.out.println("Ingrese Password: ");
+            System.out.println("Ingrese contraseña: ");
             pass = leer.readLine();
+            System.out.println("Ingrese id servicio a solicitar: ");
+            service = leer.readLine();
+            out.writeUTF(nombre + " " + service );
             //primero= this.codePass(pass);
             //System.out.println("Se codifico en: "+primero);
             //segundo= this.encrypt(primero, pass);
