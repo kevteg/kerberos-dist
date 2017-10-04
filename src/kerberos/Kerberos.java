@@ -21,26 +21,21 @@ public class Kerberos {
     private ArrayList<String> pass=null;
     private ArrayList<String> services_ids=null;
     private ArrayList<String> services_psws=null;
-    private final String passTGSpub = "14m7G5";
-    private final String passTGSpri = "5G7m41";
-    private final String passSSpub = "14m55";
-    private final String passSSpri = "55m41";
-    
+
     public Kerberos(){
         int i=0;
-        System.out.println("Servidor kerberisado");
         generate_hash();
         String[][] user_data = getInfoAtTXT("users.txt");
         user = new ArrayList<>(Arrays.asList(user_data[0]));
         pass = new ArrayList<>(Arrays.asList(user_data[1]));
         String[][] services_data = getInfoAtTXT("services.txt");
-        services_ids = new ArrayList<>(Arrays.asList(user_data[0]));
-        services_psws = new ArrayList<>(Arrays.asList(user_data[1]));        
+        services_ids = new ArrayList<>(Arrays.asList(services_data[0]));
+        services_psws = new ArrayList<>(Arrays.asList(services_data[1]));        
 
         try {    
             connect = new Socket[NM];
             server= new ServerSocket(PORT);
-            System.out.println("Estoy esperando por clientes.");
+            System.out.println("Esperando por clientes.");
             thread hilo[]= new thread[NM];
             while(i<NM){
                 connect[i]=server.accept();
@@ -114,9 +109,54 @@ public class Kerberos {
                 //Revisar que el ID del servicio exista
                 //Igual que como se verifica el nombre del usuario
                 String[] message_sep = message.split(" ");
+                String[] data_sol = null;
                 usernumber = verify_user(message_sep[0]);
                 servicenumber = verify_service(message_sep[1]);
-                if(usernumber!=-1 || servicenumber != -1){
+                if(usernumber!=-1 && servicenumber != -1){
+                    System.out.println("----AS----");
+                    //Se hace el hash de la clave del servicio (codepass) y se encripta con la clave del usuario
+                    message=encrypt(codePass(services_psws.get(servicenumber)),pass.get(usernumber));
+                    System.out.println("Se envía clave de servicio encriptado con clave del usuario " + user.get(usernumber) + ": " + message);
+                    out.writeUTF(message);
+                    //Se genera el tiempo de válidez de 1 a 60 segundos
+                    Integer valid_time = (int) (Math.random() * 60) + 1;
+                    //Se encripta el tiempo de validez con la contraseña del usuario
+                    message=encrypt(codePass(valid_time.toString()),pass.get(usernumber));
+                    System.out.println("Se envía tiempo de validez de servicio encriptado con clave del usuario " + user.get(usernumber) + ": " + message);
+                    out.writeUTF(message);
+                    System.out.println("-----SS-----");
+                    //A partir de aqui sería el SS
+                    //ahora el SS espera recibir la solicitud del servicio, 
+                    //El SS recibe el nombre, servicio y contraseña de servicio encriptada con contraseña del usuario
+                    //Debe recibir todo porque se supone que se simula un servidor aparte
+                    message = in.readUTF();
+                    data_sol = message.split(" ");
+                    System.out.println("SS Recibiendo solicitud del usuario " + data_sol[0] + " del servicio " + data_sol[1] + ": " + message);
+                    int usernumberss = verify_user(data_sol[0]);
+                    int servicenumberss = verify_service(data_sol[1]);
+                    if(usernumber!=-1 && servicenumber != -1){
+                        String ser_pass = desencrypt(data_sol[2], pass.get(usernumberss));
+                        ser_pass = decodePass(ser_pass);
+                        System.out.println(ser_pass);
+                        if(ser_pass.compareTo(services_psws.get(servicenumberss)) == 0){
+                            System.out.println("El usuario se ha logeado en el servicio");
+                            out.writeUTF("OK prestando servicio de " + data_sol[1] + " por " + valid_time.toString() + "s");
+                        }else{
+                            System.out.println("Error, contraseñas no coinciden");
+                            _socket.close();    
+                        }
+                            
+                    }else{
+                        System.out.println("SS ha recibido servicio o usuario erróneo");
+                        _socket.close();
+                    }
+
+                    
+                    
+                    
+                    
+                    
+                    /*
                     message=encrypt(codePass(passTGSpub),pass.get(usernumber));
                     out.writeUTF(message);
                     System.out.println("Se envio el mensaje con la clave publica del TGS, encriptado asi: "+message);
@@ -170,7 +210,7 @@ public class Kerberos {
                     }else{
                         System.out.println("Ticket no valido.");
                         _socket.close();
-                    }
+                    }*/
                 }else{
                     System.out.println("Usuario o servicio no válido: "+message + ". Se rechazo la solicitud");
                     _socket.close();
@@ -199,14 +239,16 @@ public class Kerberos {
         return -1;
     }
     
-    private String encrypt(String message,String pass){
+    private String encrypt(String message, String pass){
         int aux=0;String enc="";
+        //Se recorre cada caracter de la contraseña y se suma el valor numerico del char
         for (int i = 0; i < pass.length(); i++) 
             aux+=pass.codePointAt(i);
+        //
         aux/=100;
-        for (int i = 0; i < message.length(); i++) {
+        for (int i = 0; i < message.length(); i++){
             int c=message.charAt(i);
-            enc+=(char)(c+aux);
+            enc+=(char)(c + aux);
         }
         return enc;
     }
@@ -216,9 +258,9 @@ public class Kerberos {
         for (int i = 0; i < passUser.length(); i++) 
             aux+=passUser.codePointAt(i);
         aux/=100;
-        for (int i = 0; i < codePass.length(); i++) {
+        for (int i = 0; i < codePass.length(); i++){
             int c=codePass.charAt(i);
-            enc+=(char)(c-aux);
+            enc+=(char)(c - aux);
         }
         return enc;
     }

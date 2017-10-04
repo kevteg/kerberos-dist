@@ -29,7 +29,7 @@ public class Cliente {
     ArrayList<Character> hashalf = new ArrayList<>();
     ArrayList<Character> alf = new ArrayList<>();
     String nombre;
-    String pass, service, letra, clientTGS, primero, segundo, ticket, ticket1, ticket2, idcliente, idcliente2, TGSdecif, TGSdecifCod, clave_ser, client_serverSK, client_serverSK2, client_serverSK3, idCServer, idCServer2, CS_H, CS_H2, CS_H3;
+    String pass, SSdes, response, sol, valid_t, valid_t_des, valid_t_unhash, SSunhash, service, letra, clientSS, clientTGS, primero, segundo, ticket, ticket1, ticket2, idcliente, idcliente2, TGSdecif, TGSdecifCod, clave_ser, client_serverSK, client_serverSK2, client_serverSK3, idCServer, idCServer2, CS_H, CS_H2, CS_H3;
     
     
     public Cliente(){
@@ -48,7 +48,7 @@ public class Cliente {
             pass = leer.readLine();
             System.out.println("Ingrese id servicio a solicitar: ");
             service = leer.readLine();
-            System.out.println(nombre + " " + service);
+            //System.out.println(nombre + " " + service);
             out.writeUTF(nombre + " " + service);
             //primero= this.codePass(pass);
             //System.out.println("Se codifico en: "+primero);
@@ -75,19 +75,41 @@ public class Cliente {
             System.out.println("Solicitud de servicio");
 
     //Mensaje A, descifrar la clave
-            System.out.println("");
-            System.out.println("----------------------------**Primer mensaje recibido Client/TGS session key**");
-            
-            clientTGS = in.readUTF();
-            System.out.println("Mensaje A recibido es: "+clientTGS);
-            TGSdecif =this.desencrypt(clientTGS, pass);
-            TGSdecifCod = this.decodePass(TGSdecif);
-            System.out.println("La clave desifrada es: "+TGSdecifCod);
-   //Mensaje B
         System.out.println("");
-        System.out.println("----------------------------**   Segundo mensaje recibido Ticket-Granting Ticket**");
-        ticket = in.readUTF();    
-        System.out.println("Mensaje B: Ticket-Granting Ticket: "+ticket);
+        System.out.println(">> Primer mensaje recibido clave de servicio");
+        clientSS = in.readUTF();
+        System.out.println(">> Mensaje recibido es: " + clientSS);
+        SSdes =this.desencrypt(clientSS, pass);
+        SSunhash = this.decodePass(SSdes);
+        System.out.println(">> La clave desifrada es: " + SSunhash);
+    //Mensaje B
+        System.out.println("");
+        System.out.println(">> Segundo mensaje recibido tiempo de validez del servicio");
+        valid_t = in.readUTF();
+        System.out.println(">> Mensaje recibido es: " + valid_t);
+        valid_t_des =this.desencrypt(valid_t, pass);
+        valid_t_unhash = this.decodePass(valid_t_des);
+        System.out.println(">> El tiempo de validez desifrado es: " + valid_t_unhash);
+     //Mensaje C
+     //Para hacer la solicitud del servicio se envia el nombre del servicio y la clave encriptada
+        sol = nombre + " " + service + " " + clientSS;
+        System.out.println("");
+        System.out.println(">> Enviar solicitud de servicio a SS: " + sol);
+        out.writeUTF(sol);
+        //Se espera el mensaje del servidor SS
+        System.out.println("");
+        response = in.readUTF();
+        System.out.println(">> Respuesta de SS: " + response);
+        
+        
+        
+        
+        
+        
+    /*    
+        
+        
+        
    //Mensaje c
         System.out.println("");
         System.out.println("----------------------------**   Primer mensaje enviado: Ticket-Granting Ticket**");
@@ -135,7 +157,7 @@ public class Cliente {
             CS_H2=this.desencrypt(CS_H, client_serverSK3);
             CS_H3= this.decodePass(CS_H2);
             System.out.println("Confirmacion desifrada usando client/server session key: "+CS_H3);
-  
+  */
         
         
         } catch (IOException ex) {
