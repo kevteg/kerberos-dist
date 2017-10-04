@@ -44,12 +44,12 @@ public class Cliente {
 
             System.out.println("Ingrese nombre de usuario: ");
             nombre= leer.readLine();
-            out.writeUTF(nombre);
             System.out.println("Ingrese contraseña: ");
             pass = leer.readLine();
             System.out.println("Ingrese id servicio a solicitar: ");
             service = leer.readLine();
-            out.writeUTF(nombre + " " + service );
+            System.out.println(nombre + " " + service);
+            out.writeUTF(nombre + " " + service);
             //primero= this.codePass(pass);
             //System.out.println("Se codifico en: "+primero);
             //segundo= this.encrypt(primero, pass);

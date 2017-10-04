@@ -106,15 +106,17 @@ public class Kerberos {
         }
         @Override
         public void run(){
-            int usernumber=0;
+            int usernumber = 0, servicenumber = 0;
             try {
                 String message= in.readUTF();
                 System.out.println(message);
                 //Separar con un espacio el nombre del usuario y el ID
                 //Revisar que el ID del servicio exista
                 //Igual que como se verifica el nombre del usuario
-                usernumber=verify_user(message);
-                if(usernumber!=-1){
+                String[] message_sep = message.split(" ");
+                usernumber = verify_user(message_sep[0]);
+                servicenumber = verify_service(message_sep[1]);
+                if(usernumber!=-1 || servicenumber != -1){
                     message=encrypt(codePass(passTGSpub),pass.get(usernumber));
                     out.writeUTF(message);
                     System.out.println("Se envio el mensaje con la clave publica del TGS, encriptado asi: "+message);
@@ -170,7 +172,7 @@ public class Kerberos {
                         _socket.close();
                     }
                 }else{
-                    System.out.println("Usuario no valido: "+message + ". Se rechazo la solicitud");
+                    System.out.println("Usuario o servicio no válido: "+message + ". Se rechazo la solicitud");
                     _socket.close();
                 }
             } catch (IOException ex) {
@@ -182,12 +184,21 @@ public class Kerberos {
     private int verify_user(String nombre) {
         for (int i = 0; i < user.size(); i++)
                     if(nombre.compareTo(user.get(i))==0){
-                        System.out.println("Usuario valido: "+nombre);
+                        System.out.println("Usuario válido: "+nombre);
                         return i;
                     }
         return -1;
     }
 
+    private int verify_service(String nombre) {
+        for (int i = 0; i < services_ids.size(); i++)
+                    if(nombre.compareTo(services_ids.get(i))==0){
+                        System.out.println("Servicio válido: "+nombre);
+                        return i;
+                    }
+        return -1;
+    }
+    
     private String encrypt(String message,String pass){
         int aux=0;String enc="";
         for (int i = 0; i < pass.length(); i++) 
